@@ -1,0 +1,43 @@
+# Windows:
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Python:
+*.py[cod]
+*.so
+*.egg
+*.egg-info
+dist
+build
+
+# My configurations:
+db.ini
+deploy_key_rsa
+
+# Logs:
+app*.log*
+app_debug.log
+app_warning.log
+app_error.log
+
+# Setting:
+config/api.dev.yml
+config/gunicorn_settings.py
+
+# Local_Setting
+.idea
+
+# sh_setting
+#/tools_server.sh
+.vscode
+
+.isort.cfg
+
+# virtual environment
+.venv
+venv
+.vendor
+env
+ENV
+.env
