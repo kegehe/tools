@@ -1,0 +1,2 @@
+fastapi[ALL]
+aiomysql==0.2.0

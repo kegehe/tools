@@ -1,4 +1,4 @@
-from typing import Sequence, cast, Optional, Any, Dict, List
+from typing import Any, cast, Dict, List, Optional, Sequence
 
 import aiomysql
 from aiomysql import create_pool

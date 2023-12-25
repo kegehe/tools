@@ -4,8 +4,8 @@ COPY . /app
 
 WORKDIR ./app
 
-RUN pip install fastapi[all] -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install -r ./requirements/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 EXPOSE 8000
 
-CMD python main/main.py
+CMD python tools_main/app.py

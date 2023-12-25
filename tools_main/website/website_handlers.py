@@ -1,5 +1,5 @@
-from app.models.website_models import Website
-from app.tools.db_mysql import execute, fetchmany_total
+from tools_main.models.website_models import Website
+from tools_main.tools.db_mysql import execute, fetchmany_total
 
 
 async def get_website_list_handler(page: int = 0, limit: int = 20):
