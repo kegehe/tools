@@ -1,9 +1,15 @@
-from typing import Sequence, cast, Optional
+from typing import Sequence, cast, Optional, Any, Dict, List
 
 import aiomysql
 from aiomysql import create_pool
 
-config = {'host': '127.0.0.1', 'port': 3306, 'user': 'root', 'password': '123456', 'db': 'test'}
+config = {
+    'host': '47.109.86.201',
+    'port': 3306,
+    'user': 'kegehe',
+    'password': '153409712',
+    'db': 'tools_test'
+}
 
 
 async def fetchone(sql: str, args: Sequence = ()):
@@ -39,12 +45,8 @@ async def fetchmany(sql: str,
     Returns:
         List[Dict[str, Any]]: 查询结果, 无结果返回空列表, 有结果返回元素为字典的列表
     """
-    sql = table_replace(sql)
-    database_pool = DatabasePool()
-    _mysql_pool: aiomysql.Pool = await database_pool.get_mysql_pool('banshi')  # type: ignore
-    if log_sql:
-        tools_log.info('SQL: {}'.format(sql), *args)
-    async with _mysql_pool.acquire() as conn:
+    pool = await create_pool(**config)
+    async with pool.acquire() as conn:
         conn = cast(aiomysql.Connection, conn)
         try:
             await conn.ping(reconnect=True)
@@ -68,19 +70,17 @@ async def fetchmany_total(select_sql: str,
                           log_sql: bool = True,
                           args: Sequence = ()) -> Dict[str, Any]:
     """
-    查询多条数据，并返回总查询数量，sql中必须含有 SQL_CALC_FOUND_ROWS
+    查询多条数据，并返回总查询数量
     Args:
-        select_sql (str): 查询sql，必须含有 SQL_CALC_FOUND_ROWS
+        select_sql (str): 查询sql
         log_sql (bool): 是否打印sql
         args (Sequence): sql参数
     Returns:
         total (int): 总查询数量
         data (List[Dict[str, Any]]): 查询结果, 无结果返回空列表, 有结果返回元素为字典的列表
     """
-    select_sql = table_replace(select_sql)
-    database_pool = DatabasePool()
-    _mysql_pool: aiomysql.Pool = await database_pool.get_mysql_pool('banshi')  # type: ignore
-    async with _mysql_pool.acquire() as conn:
+    pool = await create_pool(**config)
+    async with pool.acquire() as conn:
         conn = cast(aiomysql.Connection, conn)
         try:
             await conn.ping(reconnect=True)
@@ -94,7 +94,7 @@ async def fetchmany_total(select_sql: str,
                 select_res = await cur.fetchall()
                 if not select_res:
                     select_res = []
-                sql_total = 'SELECT FOUND_ROWS() as total;'
+                sql_total = 'SELECT COUNT(*) AS total;'
                 await cur.execute(sql_total)
                 total = await cur.fetchone()
             except Exception:
@@ -118,21 +118,21 @@ async def execute(sql: str, log_sql: bool = True, args: Sequence = ()) -> Option
     Returns:
         Optional[int]: 最后一条更新数据的id, 无更新返回None
     """
-    sql = table_replace(sql)
-    database_pool = DatabasePool()
-    _mysql_pool: aiomysql.Pool = await database_pool.get_mysql_pool('banshi')  # type: ignore
-    async with _mysql_pool.acquire() as conn:
+    pool = await create_pool(**config)
+    async with pool.acquire() as conn:
         conn = cast(aiomysql.Connection, conn)
         try:
             await conn.ping(reconnect=True)
-        except Exception:
+        except Exception as e:
+            print(e)
             await conn._connect()
 
         async with conn.cursor(aiomysql.DictCursor) as cur:
             cur = cast(aiomysql.Cursor, cur)
             try:
                 await cur.execute(sql, args)
-            except BaseException:
+            except BaseException as e:
+                print(e)
                 await conn.rollback()
                 return None
             else:
@@ -158,10 +158,8 @@ async def executemany(sql: str,
     Returns:
         Optional[int]: 返回最后插入的id或者影响行数
     """
-    sql = table_replace(sql)
-    database_pool = DatabasePool()
-    _mysql_pool: aiomysql.Pool = await database_pool.get_mysql_pool('banshi')  # type: ignore
-    async with _mysql_pool.acquire() as conn:
+    pool = await create_pool(**config)
+    async with pool.acquire() as conn:
         conn = cast(aiomysql.Connection, conn)
         try:
             await conn.ping(reconnect=True)
