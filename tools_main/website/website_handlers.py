@@ -1,3 +1,5 @@
+import math
+
 from tools_main.models.website_models import Website
 from tools_main.tools.db_mysql import execute, fetchmany_total
 
@@ -6,10 +8,22 @@ async def get_website_list_handler(page: int = 0, limit: int = 20):
     """
     获取网站列表
     """
-    sql = 'SELECT * FROM `website` LIMIT %s, %s;'
-    website_rs = await fetchmany_total(sql, args=(page, limit))
+    if page <= 0:
+        page = 1
+    if limit > 100:
+        limit = 100
+    start = (page - 1) * limit
 
-    return {'code': 200, 'msg': '添加成功', 'data': website_rs}
+    sql = 'SELECT * FROM `website` LIMIT %s, %s;'
+    website_rs = await fetchmany_total(sql, args=(start, limit))
+
+    all_page = math.ceil(website_rs['total'] / limit)
+    data = {'count': website_rs['total'],
+            'all_page': all_page,
+            'now_page': page,
+            'website_list': website_rs['data']}
+
+    return {'code': 200, 'msg': '获取成功', 'data': data}
 
 
 async def add_website_handler(website: Website):
@@ -45,4 +59,4 @@ async def delete_website_handler(site_id: int):
     sql = 'UPDATE `website` SET is_delete = 1 WHERE site_id = %s;'
     await execute(sql, args=(site_id,))
 
-    return {'code': 204, 'msg': '添加成功', 'data': {}}
+    return {'code': 204, 'msg': '删除成功', 'data': {}}
