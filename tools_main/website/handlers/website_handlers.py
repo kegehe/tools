@@ -1,13 +1,10 @@
 import math
 import re
 from typing import Dict
-from urllib.parse import urlparse
-
-import requests
-from bs4 import BeautifulSoup
 
 from tools_main.models.website_models import Website
 from tools_main.tools.db_mysql import execute, fetchmany_total
+from tools_main.website.tools.website_tools import get_website_info
 
 
 async def get_website_list_handler(search_key: str = '', page: int = 0, limit: int = 20) -> Dict:
@@ -37,7 +34,7 @@ async def get_website_list_handler(search_key: str = '', page: int = 0, limit: i
             'now_page': page,
             'website_list': website_rs['data']}
 
-    return {'code': 200, 'msg': '获取成功', 'data': data}
+    return {'code': 200, 'msg': '请求成功', 'data': data}
 
 
 async def add_website_handler(website: Website) -> Dict:
@@ -49,48 +46,33 @@ async def add_website_handler(website: Website) -> Dict:
     website_id = await execute(sql, args=(website.name, website.url, website.description,
                                           website.keywords, website.icon, website.site_type))
     if not website_id:
-        return {'code': 400, 'msg': '添加失败', 'data': {}}
+        return {'code': 400, 'msg': '请求失败', 'data': {}}
 
-    return {'code': 201, 'msg': '添加成功', 'data': {}}
+    return {'code': 201, 'msg': '请求成功', 'data': {}}
+
+
+async def get_website_info_by_url_handler(url: str) -> Dict:
+    """
+    通过链接获取网站信息
+    """
+    data = await get_website_info(url)
+
+    return {'code': 201, 'msg': '请求成功', 'data': data}
 
 
 async def add_website_by_url_handler(url: str) -> Dict:
     """
     通过链接添加网站
     """
-    header = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                      'AppleWebKit/537.36 (KHTML, like Gecko) '
-                      'Chrome/114.0.0.0 '
-                      'Safari/537.36 '
-                      'Edg/114.0.1823.58'
-    }
-    response = requests.get(url, headers=header)
-    response.encoding = 'utf-8'
-    soup = BeautifulSoup(response.text, 'html.parser')
-
-    # 获取网站图标
-    favicon = soup.find('link', rel='icon') or soup.find('link', rel='shortcut icon')
-    favicon_url = ''
-    if favicon:
-        favicon_url = favicon.get('href') or ''
-        if 'https' not in favicon_url and 'http' not in favicon_url:
-            favicon_url = f'https://{urlparse(url).netloc}{favicon_url}'
-
-    # 获取网站描述
-    description = soup.find('meta', attrs={'name': 'description'})
-    description_content = description.get('content') if description else ''
-
-    # 获取网站标题
-    title = soup.title.string if soup.title else ''
+    data = await get_website_info(url)
 
     sql = ('INSERT INTO `website` (name, url, description, icon) '
-           'VALUES (%s, %s, %s, %s, %s, %s)')
-    website_id = await execute(sql, args=(title, url, description_content, favicon_url))
+           'VALUES (%s, %s, %s, %s)')
+    website_id = await execute(sql, args=(data['name'], data['url'], data['description'], data['icon']))
     if not website_id:
-        return {'code': 400, 'msg': '添加失败', 'data': {}}
+        return {'code': 400, 'msg': '请求失败', 'data': {}}
 
-    return {'code': 201, 'msg': '添加成功', 'data': {}}
+    return {'code': 201, 'msg': '请求成功', 'data': {}}
 
 
 async def update_website_handler(website: Website, site_id: int) -> Dict:
@@ -102,7 +84,7 @@ async def update_website_handler(website: Website, site_id: int) -> Dict:
     await execute(sql, args=(website.name, website.url, website.description, website.keywords,
                              website.icon, website.site_type, site_id))
 
-    return {'code': 201, 'msg': '修改成功', 'data': {}}
+    return {'code': 201, 'msg': '请求成功', 'data': {}}
 
 
 async def delete_website_handler(site_id: int) -> Dict:
@@ -112,4 +94,4 @@ async def delete_website_handler(site_id: int) -> Dict:
     sql = 'UPDATE `website` SET is_delete = 1 WHERE site_id = %s;'
     await execute(sql, args=(site_id,))
 
-    return {'code': 204, 'msg': '删除成功', 'data': {}}
+    return {'code': 204, 'msg': '请求成功', 'data': {}}
