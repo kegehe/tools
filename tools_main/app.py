@@ -4,11 +4,10 @@ from os import path
 import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
+from tools_main.routers import init_routes
 
 BASH = path.dirname(path.dirname(path.abspath(__file__)))
 sys.path.insert(0, BASH)
-
-from tools_main.routers import init_routes
 
 
 def init_app():

@@ -10,3 +10,10 @@ class Website(BaseModel):
     site_type: int = 0
     overdue: int = 0
     is_delete: int = 0
+
+
+class User(BaseModel):
+    name: str
+    phone: str
+    password: str
+    logo_url: str = ''

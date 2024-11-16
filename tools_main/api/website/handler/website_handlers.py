@@ -3,8 +3,8 @@ import re
 from typing import Dict
 
 from tools_main.models.website_models import Website
-from tools_main.tools.db_mysql import execute, fetchmany_total
-from tools_main.website.tools.website_tools import get_website_info
+from tools_main.util.db_mysql import execute, fetchmany_total
+from tools_main.api.website.util.website_tools import get_website_info
 
 
 async def get_website_list_handler(search_key: str = '', page: int = 0, limit: int = 20) -> Dict:
@@ -20,12 +20,12 @@ async def get_website_list_handler(search_key: str = '', page: int = 0, limit: i
     args_data = []
     search_sql = ''
     if search_key:
-        search_sql = 'name REGEXP %s OR description REGEXP %s OR keywords REGEXP %s'
+        search_sql = 'WHERE name REGEXP %s OR description REGEXP %s OR keywords REGEXP %s'
         args_data.extend([re.escape(search_key)] * 3)
 
     args_data.extend([start, limit])
 
-    sql = f'SELECT * FROM `website` {search_sql} LIMIT %s, %s;'
+    sql = f'SELECT SQL_CALC_FOUND_ROWS * FROM `website` {search_sql} LIMIT %s, %s;'
     website_rs = await fetchmany_total(sql, args=args_data)
 
     all_page = math.ceil(website_rs['total'] / limit)
@@ -55,7 +55,10 @@ async def get_website_info_by_url_handler(url: str) -> Dict:
     """
     通过链接获取网站信息
     """
-    data = await get_website_info(url)
+    try:
+        data = await get_website_info(url)
+    except ValueError as err:
+        return {'code': 400, 'msg': f'请求失败, {str(err)}', 'data': {}}
 
     return {'code': 201, 'msg': '请求成功', 'data': data}
 

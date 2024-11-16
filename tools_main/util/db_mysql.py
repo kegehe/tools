@@ -20,7 +20,6 @@ async def fetchone(sql: str, args: Sequence = ()):
             await conn.ping(reconnect=True)
         except Exception:
             await conn._connect()
-
         async with conn.cursor(aiomysql.DictCursor) as cur:
             conn = cast(aiomysql.Connection, conn)
             try:
@@ -32,14 +31,12 @@ async def fetchone(sql: str, args: Sequence = ()):
 
 
 async def fetchmany(sql: str,
-                    log_sql: bool = True,
                     args: Sequence = (),
                     size: Optional[int] = None) -> List[Dict[str, Any]]:
     """
     封装查询多条数据
     Args:
         sql (str): sql语句
-        log_sql (bool): 是否打印sql
         args (Sequence): sql参数
         size (int): 返回条数
     Returns:
@@ -66,14 +63,12 @@ async def fetchmany(sql: str,
             return rs
 
 
-async def fetchmany_total(select_sql: str,
-                          log_sql: bool = True,
+async def fetchmany_total(sql: str,
                           args: Sequence = ()) -> Dict[str, Any]:
     """
     查询多条数据，并返回总查询数量
     Args:
-        select_sql (str): 查询sql
-        log_sql (bool): 是否打印sql
+        sql (str): 查询sql
         args (Sequence): sql参数
     Returns:
         total (int): 总查询数量
@@ -90,11 +85,11 @@ async def fetchmany_total(select_sql: str,
         async with conn.cursor(aiomysql.DictCursor) as cur:
             cur = cast(aiomysql.Cursor, cur)
             try:
-                await cur.execute(select_sql, args)
+                await cur.execute(sql, args)
                 select_res = await cur.fetchall()
                 if not select_res:
                     select_res = []
-                sql_total = 'SELECT COUNT(*) AS total;'
+                sql_total = 'SELECT FOUND_ROWS();'
                 await cur.execute(sql_total)
                 total = await cur.fetchone()
             except Exception:
@@ -108,12 +103,11 @@ async def fetchmany_total(select_sql: str,
                 await conn.commit()
 
 
-async def execute(sql: str, log_sql: bool = True, args: Sequence = ()) -> Optional[int]:
+async def execute(sql: str, args: Sequence = ()) -> Optional[int]:
     """
     封装insert, delete, update
     Args:
         sql (str): sql语句
-        log_sql (bool): 是否打印sql
         args (Sequence): sql参数
     Returns:
         Optional[int]: 最后一条更新数据的id, 无更新返回None
@@ -145,14 +139,12 @@ async def execute(sql: str, log_sql: bool = True, args: Sequence = ()) -> Option
 
 
 async def executemany(sql: str,
-                      log_sql: bool = True,
                       args: Sequence[Sequence] = (),
                       get_count: bool = False) -> Optional[int]:
     """
     封装多条数据的insert
     Args:
         sql (str): sql语句
-        log_sql (bool): 是否打印sql到日志
         args (Sequence): sql语句参数
         get_count (bool): 是否返回影响行数，默认返回最后插入的id
     Returns:

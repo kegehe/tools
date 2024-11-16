@@ -12,7 +12,13 @@ async def get_website_info(url: str):
                       'Safari/537.36 '
                       'Edg/114.0.1823.58'
     }
-    response = requests.get(url, headers=header)
+    try:
+        response = requests.get(url, headers=header)
+    except requests.exceptions.ConnectionError:
+        raise ValueError('连接失败')
+    except requests.exceptions.MissingSchema:
+        raise ValueError('链接非法')
+
     response.encoding = 'utf-8'
     soup = BeautifulSoup(response.text, 'html.parser')
 
